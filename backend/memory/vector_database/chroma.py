@@ -1,0 +1,471 @@
+import uuid
+from typing import Any, Iterable
+
+import chromadb
+import chromadb.config
+from chromadb.utils.batch_utils import create_batches
+from cleantext import clean
+from helpers.log import get_logger
+from memory.embedder import Embedder
+from memory.vector_database.distance_metric import DistanceMetric, get_relevance_score_fn
+from services.ingest_documents_service.document import Document
+
+logger = get_logger(__name__)
+
+
+class Chroma:
+    def __init__(
+        self,
+        client: chromadb.Client = None,
+        embedding: Embedder | None = None,
+        persist_directory: str | None = None,
+        collection_name: str = "default",
+        collection_metadata: dict | None = None,
+        is_persistent: bool = False,
+        distance_metric: DistanceMetric = DistanceMetric.COSINE,
+    ) -> None:
+        """
+        Initializes a Chroma vector database instance.
+
+        Args:
+            client (chromadb.Client, optional): An existing Chroma client instance. If not provided, a new client will
+                be created. Defaults to None.
+            embedding (Embedder | None, optional): An instance of the Embedder class to generate embeddings for the
+                texts. If not provided, Chroma will use sentence transformer embedding function as a default.
+                Defaults to None.
+            persist_directory (str | None, optional): Directory path to persist the Chroma collection. If not provided,
+                the collection will be stored in memory. Defaults to None.
+            collection_name (str, optional): Name of the Chroma collection to use or create. Defaults to "default".
+            collection_metadata (dict | None, optional): Optional metadata to associate with the Chroma collection.
+                Defaults to None.
+            is_persistent (bool, optional): Whether to persist the Chroma collection to disk. If True, the collection
+                will be saved to the specified persist_directory. If False, the collection will be stored in memory.
+                    Defaults to True.
+            distance_metric (DistanceMetric, optional): The distance metric to use for similarity search.
+                Defaults to DistanceMetric.COSINE.
+        """
+        if is_persistent:
+            client_settings = chromadb.config.Settings(is_persistent=is_persistent, persist_directory=persist_directory)
+        else:
+            client_settings = chromadb.config.Settings(is_persistent=is_persistent)
+
+        if client is not None:
+            self.client = client
+        else:
+            self.client = chromadb.Client(client_settings)
+
+        self.embedding = embedding
+        self.distance_metric = distance_metric
+        self.collection_name = collection_name
+        self.collection_metadata = collection_metadata
+
+        # If embedding_function is None, Chroma will use Sentence Transformer all-MiniLM-L6-v2 embedding
+        # function as a default.
+        # We provide embeddings directly when adding data to a collection.
+        # In this case, the collection will not have an embedding function set, and we are responsible for providing
+        # embeddings directly when adding data and querying.
+        # https://docs.trychroma.com/docs/collections/manage-collections#embedding-functions
+
+        # Chroma’s default metric when creating a collection is L2 distance (squared L2 norm), configurable
+        # to cosine or inner product (ip). Hence, Lower scores = better matches.
+        # We set the Cosine by default. For Chroma whatever score represent distance;
+        # So the get the right similarity we have to apply 1 - score in similarity_search_with_relevance_scores method.
+        # https://docs.trychroma.com/cloud/search-api/ranking#understanding-scores
+        self.collection = self.client.get_or_create_collection(
+            name=collection_name,
+            embedding_function=None,
+            configuration={"hnsw": {"space": self.distance_metric.value}},
+            metadata=collection_metadata,
+        )
+
+    @property
+    def embeddings(self) -> Embedder | None:
+        return self.embedding
+
+    def __query_collection(
+        self,
+        query_texts: list[str] | None = None,
+        query_embeddings: list[list[float]] | None = None,
+        n_results: int = 4,
+        where: dict[str, str] | None = None,
+        where_document: dict[str, str] | None = None,
+        **kwargs: Any,
+    ):
+        """
+        Query the chroma collection.
+
+        Args:
+            query_texts: List of query texts.
+            query_embeddings: List of query embeddings.
+            n_results: Number of results to return. Defaults to 4.
+            where: dict used to filter results by
+                    e.g. {"color" : "red", "price": 4.20}.
+            where_document: dict used to filter by the documents.
+                    E.g. {$contains: {"text": "hello"}}.
+            kwargs: Additional keyword arguments to pass to Chroma collection query.
+
+        Returns:
+            List of `n_results` nearest neighbor embeddings for provided
+            query_embeddings or query_texts.
+
+        See more: https://docs.trychroma.com/reference/py-collection#query
+        """
+
+        return self.collection.query(
+            query_texts=query_texts,
+            query_embeddings=query_embeddings,
+            n_results=n_results,
+            where=where,
+            where_document=where_document,
+            **kwargs,
+        )
+
+    def add_texts(
+        self,
+        texts: Iterable[str],
+        metadata: list[dict] | None = None,
+        ids: list[str] | None = None,
+    ) -> list[str]:
+        """
+        Adds a batch of texts to the Chroma collection.
+
+        Args:
+            texts (Iterable[str]): Texts to add to the vectorstore.
+            metadata (list[dict] | None): Optional list of metadata.
+            ids (list[str] | None): Optional list of IDs. If not provided,
+                random UUIDs will be generated for each text.
+
+        Returns:
+            List[str]: List of IDs of the added texts.
+        """
+
+        if self.embedding is None:
+            raise ValueError("Embedding function is not defined for this Chroma instance.")
+
+        texts = list(texts)
+
+        # Generate unique IDs if not provided
+        if ids is None:
+            ids = [str(uuid.uuid4()) for _ in texts]
+
+        # Generate embeddings for all texts
+        embeddings = self.embedding.embed_documents(texts)
+
+        try:
+            if metadata:
+                # fill metadata with empty dicts if somebody
+                # did not specify metadata for all texts
+                length_diff = len(texts) - len(metadata)
+
+                if length_diff:
+                    metadata = metadata + [{}] * length_diff
+
+                non_empty_ids = [idx for idx, m in enumerate(metadata) if m]
+                empty_ids = [idx for idx, m in enumerate(metadata) if not m]
+
+                if non_empty_ids:
+                    # Upsert texts with metadata
+                    metadata_with_data = [metadata[idx] for idx in non_empty_ids]
+                    texts_with_metadata = [texts[idx] for idx in non_empty_ids]
+                    embeddings_with_metadata = [embeddings[idx] for idx in non_empty_ids] if embeddings else None
+                    ids_with_metadata = [ids[idx] for idx in non_empty_ids]
+                    self.collection.upsert(
+                        metadatas=metadata_with_data,
+                        embeddings=embeddings_with_metadata,
+                        documents=texts_with_metadata,
+                        ids=ids_with_metadata,
+                    )
+
+                if empty_ids:
+                    # Upsert texts without metadata
+                    texts_without_metadata = [texts[j] for j in empty_ids]
+                    embeddings_without_metadata = [embeddings[j] for j in empty_ids] if embeddings else None
+                    ids_without_metadata = [ids[j] for j in empty_ids]
+                    self.collection.upsert(
+                        embeddings=embeddings_without_metadata,
+                        documents=texts_without_metadata,
+                        ids=ids_without_metadata,
+                    )
+
+            else:
+                self.collection.upsert(
+                    embeddings=embeddings,
+                    documents=texts,
+                    ids=ids,
+                )
+        except Exception as e:
+            logger.error(f"Error adding texts to Chroma collection: {e}")
+            raise
+        return ids
+
+    def from_texts(
+        self,
+        texts: list[str],
+        metadata: list[dict] | None = None,
+        ids: list[str] | None = None,
+    ) -> list[str]:
+        """
+        Adds a batch of texts to the Chroma collection, optionally with metadata and IDs.
+
+        Args:
+            texts (list[str]): List of texts to add to the collection.
+            metadata (list[dict], optional): List of metadata dictionaries corresponding to the texts.
+                Defaults to None.
+            ids (list[str], optional): List of IDs for the texts. If not provided,
+                random UUIDs will be generated for each text.
+                Defaults to None.
+
+        Returns:
+            list[str]: List of IDs of the added texts.
+        """
+        # Generate unique IDs if not provided
+        if ids is None:
+            ids = [str(uuid.uuid4()) for _ in texts]
+
+        for batch in create_batches(
+            api=self.client,
+            ids=ids,
+            metadatas=metadata,
+            documents=texts,
+        ):
+            self.add_texts(
+                texts=batch[3] if batch[3] else [],
+                metadata=batch[2] if batch[2] else None,
+                ids=batch[0],
+            )
+
+        return ids
+
+    def from_chunks(self, chunks: list[Document]) -> list[str]:
+        """
+        Add document chunks to the vector database index.
+
+        Args:
+            chunks (list): List of Document chunks to add to the collection.
+
+        Returns:
+            list[str]: List of IDs of the added chunks.
+        """
+        # clean-text converts Unicode to ASCII by default, which corrupts
+        # non-ASCII document content such as Chinese before embedding.
+        texts = [clean(doc.page_content, no_emoji=True, to_ascii=False) for doc in chunks]
+        metadata = [doc.metadata for doc in chunks]
+        return self.from_texts(
+            texts=texts,
+            metadata=metadata,
+        )
+
+    def get_indexed_documents(self) -> list[str]:
+        """
+        Get list of unique document sources in the index.
+
+        Args:
+            index: Chroma vector database instance
+
+        Returns:
+            List of unique source document names
+        """
+        try:
+            # Get all items from collection
+            results = self.collection.get()
+            if results and "metadatas" in results:
+                sources = set()
+                for metadatas in results["metadatas"]:
+                    if metadatas and "source" in metadatas:
+                        sources.add(metadatas["source"])
+                return sorted(sources)
+        except Exception as e:
+            logger.warning(f"Could not retrieve indexed documents: {e}")
+        return []
+
+    def delete_collection(self, collection_name: str = "default") -> None:
+        """
+        Deletes the entire Chroma collection, removing all indexed data.
+
+        Args:
+            collection_name (str): The name of the Chroma collection to delete. Defaults to "default".
+        """
+        try:
+            self.client.delete_collection(name=collection_name)
+            logger.info("Chroma collection deleted successfully.")
+        except Exception as e:
+            logger.error(f"Error deleting Chroma collection: {e}", exc_info=True, stack_info=True)
+            raise
+
+    def reset_collection(self) -> None:
+        """
+        Resets the collection by deleting all its items while keeping the collection itself.
+        This avoids creating new UUID folders and orphaning old index files.
+        """
+        try:
+            # Get all IDs in the collection
+            results = self.collection.get()
+            if results and results.get("ids"):
+                ids_to_delete = results["ids"]
+                # Delete all items in batches to avoid potential issues with large collections
+                batch_size = 5000
+                for i in range(0, len(ids_to_delete), batch_size):
+                    batch = ids_to_delete[i : i + batch_size]
+                    self.collection.delete(ids=batch)
+                logger.info(f"Cleared {len(ids_to_delete)} items from collection '{self.collection_name}'")
+            else:
+                logger.info(f"Collection '{self.collection_name}' is already empty")
+        except Exception as e:
+            logger.error(f"Error resetting Chroma collection: {e}", exc_info=True, stack_info=True)
+            raise
+
+    def delete_chunks_by_document_id(
+        self,
+        document_id: str,
+        chunk_ids: list[str] | None = None,
+    ) -> None:
+        """
+        Remove chunks belonging to a specific document.
+
+        When *chunk_ids* is provided the deletion is precise (by ID list).
+        Otherwise, falls back to a metadata-based ``where`` filter.
+
+        Args:
+            document_id: The document identifier whose chunks should be deleted.
+            chunk_ids: Optional explicit list of chunk IDs to delete.
+        """
+        try:
+            if chunk_ids:
+                self.collection.delete(ids=chunk_ids)
+            else:
+                self.collection.delete(where={"document_id": document_id})
+            logger.info("Deleted chunks for document_id=%s", document_id)
+        except Exception as e:
+            logger.error("Error deleting chunks for document_id=%s: %s", document_id, e)
+            raise
+
+    def similarity_search_with_threshold(
+        self,
+        query: str,
+        k: int = 4,
+        threshold: float | None = 0.2,
+    ) -> tuple[list[Document], list[dict[str, Any]]]:
+        """
+        Performs similarity search on the given query.
+
+        Args:
+            query : str
+                The query string.
+
+            k : int, optional
+                The number of retrievals to consider (default is 4).
+
+            threshold : float, optional
+                The threshold for considering similarity scores (default is 0.2).
+
+        Returns:
+            tuple[list[Document], list[dict[str, Any]]]
+                A tuple containing the list of matched documents and a list of their sources.
+
+        """
+        # `similarity_search_with_relevance_scores` return docs and relevance scores in the range [0, 1].
+        # 0 is dissimilar, 1 is most similar.
+        docs_and_scores = self.similarity_search_with_relevance_scores(query=query, k=k)
+
+        if threshold is not None:
+            docs_and_scores = [doc for doc in docs_and_scores if doc[1] > threshold]
+            if len(docs_and_scores) == 0:
+                logger.warning(f"No relevant docs were retrieved using the relevance score threshold {threshold}")
+
+            docs_and_scores = sorted(docs_and_scores, key=lambda x: x[1], reverse=True)
+
+        retrieved_contents = [doc[0] for doc in docs_and_scores]
+        sources = []
+        for doc, score in docs_and_scores:
+            sources.append(
+                {
+                    "score": round(score, 3),
+                    "document": doc.metadata.get("source"),
+                    "content_preview": f"{doc.page_content[0:256]}...",
+                }
+            )
+
+        return retrieved_contents, sources
+
+    def similarity_search(self, query: str, k: int = 4, filter: dict[str, str] | None = None) -> list[Document]:
+        """
+        Run similarity search with Chroma.
+
+        Args:
+            query (str): Query text to search for.
+            prompt_name (str): The name of the prompt to use for embedding the query. Default is None.
+            k (int): Number of results to return. Defaults to 4.
+            filter (dict[str, str]|None): Filter by metadata. Defaults to None.
+
+        Returns:
+            List[Document]: List of documents most similar to the query text.
+        """
+        docs_and_scores = self.similarity_search_with_score(query=query, k=k, filter=filter)
+        return [doc for doc, _ in docs_and_scores]
+
+    def similarity_search_with_score(
+        self,
+        query: str,
+        k: int = 4,
+        filter: dict[str, str] | None = None,
+        where_document: dict[str, str] | None = None,
+    ) -> list[tuple[Document, float]]:
+        """
+        Run similarity search with Chroma with distance.
+
+        Args:
+            query (str): Query text to search for.
+            k (int): Number of results to return. Defaults to 4.
+            filter (dict[str, str]|None): Filter by metadata. Defaults to None.
+            where_document (dict[str, str]|None): Filter by document content. Defaults to None.
+
+        Returns:
+            list[tuple[Document, float]]: List of documents most similar to
+            the query text and cosine distance in float for each.
+            Lower score represents more similarity.
+        """
+        if self.embedding is None:
+            results = self.__query_collection(
+                query_texts=[query],
+                n_results=k,
+                where=filter,
+                where_document=where_document,
+            )
+        else:
+            query_embedding = self.embedding.embed_query(text=query)
+            results = self.__query_collection(
+                query_embeddings=[query_embedding],
+                n_results=k,
+                where=filter,
+                where_document=where_document,
+            )
+        return [
+            (Document(page_content=result[0], metadata=result[1] or {}), result[2])
+            for result in zip(
+                results["documents"][0],
+                results["metadatas"][0],
+                results["distances"][0],
+            )
+        ]
+
+    def similarity_search_with_relevance_scores(self, query: str, k: int = 4) -> list[tuple[Document, float]]:
+        """
+        Return docs and relevance scores in the range [0, 1].
+
+        0 is dissimilar, 1 is most similar.
+
+        Args:
+            query: input text
+            k: Number of Documents to return. Defaults to 4.
+
+        Returns:
+            List of Tuples of (doc, similarity_score)
+        """
+        # relevance_score_fn is a function to calculate relevance score from distance.
+        relevance_score_fn = get_relevance_score_fn(self.distance_metric)
+
+        docs_and_scores = self.similarity_search_with_score(query=query, k=k)
+        docs_and_similarities = [(doc, relevance_score_fn(score)) for doc, score in docs_and_scores]
+        if any(similarity < 0.0 or similarity > 1.0 for _, similarity in docs_and_similarities):
+            logger.warning(f"Relevance scores must be between 0 and 1, got {docs_and_similarities}")
+        return docs_and_similarities
