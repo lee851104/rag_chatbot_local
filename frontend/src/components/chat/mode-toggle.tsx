@@ -6,12 +6,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Database, Brain, Globe } from "lucide-react"
+import { Database } from "lucide-react"
 
 export interface ChatModes {
   rag: boolean
-  reasoning: boolean
-  webSearch: boolean
 }
 
 interface ModeToggleProps {
@@ -25,18 +23,6 @@ const modeConfig = [
     icon: Database,
     label: "RAG Mode",
     description: "Use uploaded documents for context",
-  },
-  {
-    key: "reasoning" as const,
-    icon: Brain,
-    label: "Reasoning",
-    description: "Enable step-by-step reasoning",
-  },
-  {
-    key: "webSearch" as const,
-    icon: Globe,
-    label: "Web Search",
-    description: "Search the web for answers",
   },
 ]
 

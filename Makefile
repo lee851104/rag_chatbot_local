@@ -1,4 +1,4 @@
-.PHONY: check update test clean start migrate_db generate_api_types
+.PHONY: check update test clean start migrate_db generate_api_types evaluate_retrieval
 
 check:
 	which pip3
@@ -21,6 +21,9 @@ migrate_db:
 # Run this after changing any request or response model; CI fails if it is stale.
 generate_api_types:
 	poetry run python scripts/generate_api_types.py
+
+evaluate_retrieval:
+	poetry run python scripts/evaluate_retrieval.py
 
 start_llama_server_cuda:
 	docker compose up -d

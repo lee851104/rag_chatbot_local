@@ -1,0 +1,20 @@
+{"id":"kv-cache-purpose","query":"KV cache 在大型語言模型推論時保存什麼，主要好處與代價是什麼？","relevant_sources":["kv-cache.md"]}
+{"id":"kv-cache-q8-mapping","query":"llama.cpp 的 KV cache 類型整數 8 對應哪一種 GGML 格式？","relevant_sources":["kv-cache.md"]}
+{"id":"turboquant-compression","query":"TurboQuant 可以把 KV cache 壓縮到每個元素多少 bit，大約減少幾倍記憶體？","relevant_sources":["kv-cache.md"]}
+{"id":"pdf-granite-docling","query":"Granite Docling 的單一 VLM 方法和傳統 Docling 多階段 PDF pipeline 有什麼不同？","relevant_sources":["pdf-parsing.md"]}
+{"id":"pdf-fast-alternatives","query":"有哪些工具宣稱能比 Docling 更快地把 PDF 轉成 Markdown？","relevant_sources":["pdf-parsing.md"]}
+{"id":"incremental-index-changed-docs","query":"文件內容變更時，增量向量索引如何只更新受影響的 chunks？","relevant_sources":["incremental-vector-store-updates.md"]}
+{"id":"embedding-model-rebuild","query":"為什麼更換 embedding model 後必須完整重建 vector store？","relevant_sources":["incremental-vector-store-updates.md"]}
+{"id":"claude-code-apple-build","query":"在 Apple Silicon 上如何編譯 llama.cpp 給本地 Claude Code 使用？","relevant_sources":["private-claude-code.md"]}
+{"id":"claude-code-model-download","query":"如何使用 Hugging Face CLI 下載 Qwen GGUF 與 mmproj 檔案？","relevant_sources":["private-claude-code.md"]}
+{"id":"docker-gpu-verification","query":"安裝 NVIDIA Container Toolkit 後要用哪個 Docker 指令確認 GPU 可用？","relevant_sources":["server-docker.md"]}
+{"id":"ubuntu-poetry-version","query":"這個專案在 Ubuntu WSL 鎖定哪個 Poetry 版本，應如何用 pipx 安裝？","relevant_sources":["rag-setup-manual-part-4.md"]}
+{"id":"ubuntu-node-yarn","query":"本地 RAG 安裝手冊要求的 Node 與 Yarn 前端工具鏈版本是什麼？","relevant_sources":["rag-setup-manual-part-4.md"]}
+{"id":"router-mode-no-restart","query":"llama.cpp server 如何在不重啟服務的情況下切換多個模型？","relevant_sources":["live-model-switching.md"]}
+{"id":"router-model-load-api","query":"手動載入與卸載 llama.cpp 模型要呼叫哪些 HTTP endpoints？","relevant_sources":["live-model-switching.md"]}
+{"id":"mcp-web-search-missing","query":"目前 Web Search 的 MCP 整合還缺少哪些後端元件？","relevant_sources":["web-search-integration-using-mcp-protocol.md"]}
+{"id":"mcp-web-search-architecture","query":"Web Search MCP server 的 tools、providers 與 query processor 建議如何分層？","relevant_sources":["web-search-integration-using-mcp-protocol.md"]}
+{"id":"repo-structure-rating","query":"目前專案結構被評為幾分，主要缺少哪些 domain boundaries？","relevant_sources":["repo-structure.md"]}
+{"id":"repo-observability-location","query":"建議的新專案結構把 logging、metrics 和 tracing 放在哪個目錄？","relevant_sources":["repo-structure.md"]}
+{"id":"rag-ui-no-sidebar","query":"RAG UI 不使用 sidebar 時，文件上傳與模式切換應放在哪裡？","relevant_sources":["rag-ui-plan.md"]}
+{"id":"tree-summarization-combine","query":"Tree Summarization Strategy 如何用 num_children 分批並遞迴合併回答？","relevant_sources":["tree-summarization-strategy.md"]}

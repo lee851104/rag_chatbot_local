@@ -3,10 +3,16 @@ from logging.config import fileConfig
 from alembic import context
 from config import settings
 from helpers.log import get_logger
+from models.chat_message_record import ChatMessageRecord
+from models.document_record import DocumentRecord
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 logger = get_logger(__name__)
+
+# Import every table model before reading SQLModel.metadata. Otherwise future
+# Alembic autogeneration can mistake an unregistered table for a deletion.
+_REGISTERED_MODELS = (ChatMessageRecord, DocumentRecord)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -57,8 +63,7 @@ def run_migrations_online() -> None:
     # Get database URL from environment variable
     if settings.DATABASE_URL is None:
         logger.info(
-            "DATABASE_URL environment variable is not set. "
-            "Applying migrations Using sqlalchemy.url from alembic.ini."
+            "DATABASE_URL environment variable is not set. Applying migrations Using sqlalchemy.url from alembic.ini."
         )
     else:
         logger.info("Applying migrations Using DATABASE_URL from environment variable.")

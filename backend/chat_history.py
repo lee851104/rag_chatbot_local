@@ -1,6 +1,3 @@
-from config import settings
-
-
 class ChatHistory(list):
     def __init__(self, messages: list | None = None, total_length: int = -1):
         """Initialise the queue with a fixed total length.
@@ -22,7 +19,9 @@ class ChatHistory(list):
         Args:
             msg (str): The message to be added to the chat history.
         """
-        if len(self) == self.total_length:
+        if self.total_length == 0:
+            return
+        if self.total_length > 0 and len(self) >= self.total_length:
             self.pop(0)
         super().append(msg)
 
@@ -37,5 +36,5 @@ class ChatHistory(list):
         return chat_history
 
 
-def init_chat_history(total_length: int = 2) -> ChatHistory:
-    return ChatHistory(total_length=total_length)
+def init_chat_history(total_length: int = 2, messages: list | None = None) -> ChatHistory:
+    return ChatHistory(messages=messages, total_length=total_length)

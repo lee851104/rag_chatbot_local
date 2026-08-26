@@ -1,6 +1,6 @@
 import type { ChatStreamClientMessage, ChatStreamServerMessage } from '@/types/api';
 
-type TokenHandler = (token: ChatStreamServerMessage) => void;
+type FrameHandler = (frame: ChatStreamServerMessage) => void;
 type ErrorHandler = (error: string) => void;
 
 const WS_BASE = (() => {
@@ -16,11 +16,11 @@ const WS_URL = `${WS_BASE}/chat/stream`;
 
 export class ChatWebSocket {
   private ws: WebSocket | null = null;
-  private readonly onToken: TokenHandler;
+  private readonly onFrame: FrameHandler;
   private readonly onError: ErrorHandler;
 
-  constructor(onToken: TokenHandler, onError: ErrorHandler) {
-    this.onToken = onToken;
+  constructor(onFrame: FrameHandler, onError: ErrorHandler) {
+    this.onFrame = onFrame;
     this.onError = onError;
   }
 
@@ -51,7 +51,14 @@ export class ChatWebSocket {
       };
 
       this.ws.onmessage = (event) => {
-        this.onToken(event.data as ChatStreamServerMessage);
+        let frame: ChatStreamServerMessage;
+        try {
+          frame = JSON.parse(event.data as string) as ChatStreamServerMessage;
+        } catch {
+          this.onError('The server sent a frame that was not valid JSON');
+          return;
+        }
+        this.onFrame(frame);
       };
 
       this.ws.onerror = () => {

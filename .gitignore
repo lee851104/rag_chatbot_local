@@ -127,6 +127,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.poetry-tools/
 env/
 venv/
 ENV/
@@ -168,4 +169,6 @@ cython_debug/
 .idea/
 frontend/node_modules/
 models/*.gguf
+models/huggingface/
 vector_store/
+evaluation/results/

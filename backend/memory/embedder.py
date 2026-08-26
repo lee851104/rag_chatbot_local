@@ -102,9 +102,15 @@ class Embedder:
             list[float]: Embeddings for the text.
         """
         text = self._clean_texts([text])[0]
+        # Online queries embed one string at a time, so a progress bar only
+        # adds noisy output to application logs. Keep it disabled even if a
+        # caller supplies a conflicting encode option.
+        encode_kwargs["show_progress_bar"] = False
 
         embeddings = self.client.encode(
-            sentences=text, normalize_embeddings=False, show_progress_bar=True, **encode_kwargs
+            sentences=text,
+            normalize_embeddings=False,
+            **encode_kwargs,
         )
 
         return embeddings.tolist()

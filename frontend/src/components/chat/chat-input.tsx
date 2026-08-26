@@ -63,7 +63,7 @@ export function ChatInput({
     }
   }, [input])
 
-  const hasActiveMode = modes.rag || modes.reasoning || modes.webSearch
+  const hasActiveMode = modes.rag
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 pb-6 pt-2">

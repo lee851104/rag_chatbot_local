@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import type { DocumentListResponse, DocumentUploadResponse } from '@/types/api';
+import type { ChatHistoryResponse, DocumentListResponse, DocumentUploadResponse } from '@/types/api';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
 
@@ -35,6 +35,13 @@ export async function deleteDocument(documentId: string): Promise<void> {
   await axios.delete(`${API_BASE}/documents/${documentId}`);
 }
 
-export async function resetChatHistory(): Promise<void> {
-  await axios.delete(`${API_BASE}/chat/history`);
+export async function getChatHistory(conversationId: string): Promise<ChatHistoryResponse> {
+  const response = await axios.get<ChatHistoryResponse>(
+    `${API_BASE}/chat/history/${conversationId}`,
+  );
+  return response.data;
+}
+
+export async function deleteChatHistory(conversationId: string): Promise<void> {
+  await axios.delete(`${API_BASE}/chat/history/${conversationId}`);
 }

@@ -9,8 +9,6 @@ function App() {
 
   const [modes, setModes] = useState<ChatModes>({
     rag: false,
-    reasoning: false,
-    webSearch: false,
   });
 
   // Map hook's Message shape to template's Message shape
@@ -32,11 +30,9 @@ function App() {
       sendMessage({
         text: content,
         rag: modes.rag,
-        reasoning: modes.reasoning,
-        web_search: modes.webSearch,
       });
     },
-    [sendMessage, modes.rag, modes.reasoning, modes.webSearch],
+    [sendMessage, modes.rag],
   );
 
   const handleNewChat = useCallback(() => {

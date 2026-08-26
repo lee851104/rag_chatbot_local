@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from helpers.log import get_logger
 from llm_client import init_llm_client
+from reranker import init_reranker
 from vector_database import init_vector_database
 
 logger = get_logger(__name__)
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
     state.db_engine = init_db_engine()
     state.llm_client = init_llm_client(settings.MODEL_FOLDER)
     state.vector_database = init_vector_database(settings.VECTOR_STORE_PATH)
+    state.reranker = init_reranker()
 
     yield
 

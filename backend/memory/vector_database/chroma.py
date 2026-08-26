@@ -343,7 +343,8 @@ class Chroma:
         self,
         query: str,
         k: int = 4,
-        threshold: float | None = 0.2,
+        *,
+        threshold: float | None,
     ) -> tuple[list[Document], list[dict[str, Any]]]:
         """
         Performs similarity search on the given query.
@@ -355,8 +356,8 @@ class Chroma:
             k : int, optional
                 The number of retrievals to consider (default is 4).
 
-            threshold : float, optional
-                The threshold for considering similarity scores (default is 0.2).
+            threshold : float | None
+                The minimum relevance score. ``None`` disables filtering.
 
         Returns:
             tuple[list[Document], list[dict[str, Any]]]

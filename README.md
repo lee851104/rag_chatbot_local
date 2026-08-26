@@ -221,6 +221,21 @@ which are small (239M & 677M parameters) with SOTA performance for multilingual 
 | `jinaai/jina-embeddings-v5-text-small-retrieval` - jina-embeddings-v5-text-small | ✅         | 0.596B     | 32k        | 64.88                  | **Recommended model** [Card](https://huggingface.co/jinaai/jina-embeddings-v5-text-small-retrieval) |
 | `jinaai/jina-embeddings-v5-text-nano-retrieval` - jina-embeddings-v5-text-nano   | ✅         | 0.212B     | 8k         | 63.26                  | [Card](https://huggingface.co/jinaai/jina-embeddings-v5-text-nano-retrieval)                        |
 
+### Set the Reranker
+
+RAG retrieval uses two stages: vector search retrieves 20 candidates, then a
+Cross-Encoder reranks them and keeps the best 3 or 5 chunks. Configure it in `.env`:
+
+```shell
+RERANKER_MODEL="cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+RERANK_CANDIDATES=20
+RERANK_TOP_N=3
+RERANK_BATCH_SIZE=8
+```
+
+`RERANK_TOP_N` accepts `3` or `5`. The default model is multilingual and is
+downloaded by Sentence Transformers on the first backend startup.
+
 ### Set the Response Synthesis strategy
 
 In the .𝐞𝐧𝐯 we need to set the `SYNTHESIS_STRATEGY` variable with the name of the strategy we want to use for the response synthesis:

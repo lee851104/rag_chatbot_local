@@ -1,5 +1,7 @@
 from pathlib import Path
+from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_PATH = Path(__file__).parents[1]
@@ -49,14 +51,18 @@ class Settings(BaseSettings):
     MAX_NEW_TOKENS: int = 512
 
     # Retrieval Configuration
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = "jinaai/jina-embeddings-v5-text-small-retrieval"
     SYNTHESIS_STRATEGY: str = "tree-summarization"
-    NUM_RETRIEVALS: int = 2
+    RELEVANCE_THRESHOLD: float = Field(default=0.2, ge=0.0, le=1.0)
+    RERANKER_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+    RERANK_CANDIDATES: int = Field(default=20, ge=5)
+    RERANK_TOP_N: Literal[3, 5] = 3
+    RERANK_BATCH_SIZE: int = Field(default=8, ge=1)
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 50
 
     # Chat History Configuration
-    CHAT_HISTORY_LENGTH: int = 2
+    CHAT_HISTORY_LENGTH: int = Field(default=2, ge=0)
 
     # WebSocket Configuration
     WEBSOCKET_MAX_SIZE: int = 10 * 1024 * 1024  # 10 MB

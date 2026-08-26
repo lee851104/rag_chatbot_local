@@ -1,12 +1,14 @@
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from alembic import command
 from alembic.config import Config
-from api.deps import get_db_session, get_index, get_llm_client
+from api.deps import get_db_session, get_index, get_llm_client, get_reranker
 from llm_providers.llamacpp_client import LlamaCppClient
 from main import app
 from memory.embedder import Embedder
+from memory.reranker import Reranker
 from memory.vector_database.chroma import Chroma
 from schemas.model import ModelSettings
 from sqlmodel import Session, create_engine
@@ -60,6 +62,16 @@ def chroma_instance(tmp_path, embedding):
     return Chroma(embedding=embedding, persist_directory=str(tmp_path), is_persistent=True)
 
 
+@pytest.fixture
+def reranker():
+    reranker = Mock(spec=Reranker)
+    reranker.rerank.side_effect = lambda query, documents, sources, top_n: (
+        documents[:top_n],
+        sources[:top_n],
+    )
+    return reranker
+
+
 @pytest.fixture(scope="session")
 def db_engine(tmp_path_factory, session_mocker):
     """
@@ -111,7 +123,7 @@ def session_fixture(db_engine) -> Session:
 
 
 @pytest.fixture(name="client_with_overridden_deps")
-def client_fixture(session: Session, llamacpp_client: LlamaCppClient, chroma_instance: Chroma):
+def client_fixture(session: Session, llamacpp_client: LlamaCppClient, chroma_instance: Chroma, reranker: Reranker):
     def get_db_session_override():
         return session
 
@@ -121,9 +133,13 @@ def client_fixture(session: Session, llamacpp_client: LlamaCppClient, chroma_ins
     def get_index_client_override():
         return chroma_instance
 
+    def get_reranker_override():
+        return reranker
+
     app.dependency_overrides[get_db_session] = get_db_session_override
     app.dependency_overrides[get_llm_client] = get_llm_client_override
     app.dependency_overrides[get_index] = get_index_client_override
+    app.dependency_overrides[get_reranker] = get_reranker_override
 
     client = TestClient(app)
 

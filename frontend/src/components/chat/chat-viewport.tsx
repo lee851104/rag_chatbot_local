@@ -48,12 +48,12 @@ function EmptyState() {
             Welcome to Autara AI
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto text-pretty">
-            Your intelligent assistant for conversations, document Q&A, and research.
+            Your intelligent assistant for conversations and document Q&A.
           </p>
         </div>
 
         {/* Capabilities */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+        <div className="grid grid-cols-1 gap-4 pt-4 max-w-sm mx-auto">
           {capabilities.map((cap, i) => (
             <div
               key={i}
@@ -93,14 +93,6 @@ const capabilities = [
   {
     title: "Document Q&A",
     description: "Upload Markdown files for Q&A.",
-  },
-  {
-    title: "(WIP) Deep Reasoning",
-    description: "(WIP) Enable step-by-step reasoning for complex problem solving.",
-  },
-  {
-    title: "(WIP) Web Research",
-    description: "(WIP) Search the web in real-time to find current information.",
   },
 ]
 
