@@ -1,8 +1,24 @@
 import axios from 'axios';
 
-import type { ChatHistoryResponse, DocumentListResponse, DocumentUploadResponse } from '@/types/api';
+import type {
+  ChatHistoryResponse,
+  DocumentListResponse,
+  DocumentUploadResponse,
+  HealthResponse,
+} from '@/types/api';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
+
+/**
+ * Where this build is pointed. Shown in the status bar so a misconfigured
+ * `VITE_API_URL` reads as "wrong address" rather than "backend is down".
+ */
+export const apiOrigin = API_BASE || window.location.origin;
+
+export async function getHealth(): Promise<HealthResponse> {
+  const response = await axios.get<HealthResponse>(`${API_BASE}/health`, { timeout: 5000 });
+  return response.data;
+}
 
 export async function uploadDocument(
   file: File,

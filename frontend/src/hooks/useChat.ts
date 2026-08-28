@@ -3,6 +3,8 @@ import { flushSync } from 'react-dom';
 import { ChatWebSocket } from '../services/websocket';
 import { getChatHistory } from '../services/api';
 import type { ChatRequest } from '@/types/api';
+import type { Retrieval, TurnMetrics } from '@/types/chat';
+import { parseSourcesFrame } from '@/lib/streamProtocol';
 
 const CONVERSATION_ID_KEY = 'rag-chatbot-conversation-id';
 
@@ -25,6 +27,19 @@ interface Message {
   sender: 'user' | 'bot';
   timestamp: Date;
   isStreaming?: boolean;
+  /** Parsed out of the `sources` frame. Null on non-RAG and restored turns. */
+  retrieval?: Retrieval | null;
+  /** The `sources` frame verbatim, kept only when parsing did not recognise it. */
+  rawSources?: string | null;
+  /** Measured in the browser; the backend does not report timings. */
+  metrics?: TurnMetrics | null;
+}
+
+/** Timings for the response currently being streamed. */
+interface TurnTiming {
+  startedAt: number;
+  firstTokenAt: number | null;
+  tokens: number;
 }
 
 /** Append streamed text to the answer bubble that is currently being filled. */
@@ -32,6 +47,28 @@ function appendToLastBotMessage(messages: Message[], text: string): Message[] {
   const last = messages[messages.length - 1];
   if (last?.sender !== 'bot') return messages;
   return [...messages.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }];
+}
+
+/** Attach the retrieval outcome to the answer bubble currently being filled. */
+function attachSources(messages: Message[], frameText: string): Message[] {
+  const last = messages[messages.length - 1];
+  if (last?.sender !== 'bot') return messages;
+
+  const retrieval = parseSourcesFrame(frameText);
+  return [
+    ...messages.slice(0, -1),
+    // A frame the parser does not recognise is kept verbatim rather than
+    // dropped, so a wording change on the backend degrades to "the preview looks
+    // like it used to" instead of "the sources vanished".
+    { ...last, retrieval, rawSources: retrieval ? null : frameText },
+  ];
+}
+
+/** Freeze the timings onto the answer bubble as it closes. */
+function attachMetrics(messages: Message[], metrics: TurnMetrics): Message[] {
+  const last = messages[messages.length - 1];
+  if (last?.sender !== 'bot') return messages;
+  return [...messages.slice(0, -1), { ...last, metrics }];
 }
 
 /** Close out the answer bubble, optionally recording why it ended early. */
@@ -71,20 +108,43 @@ export function useChat() {
   const wsRef = useRef<ChatWebSocket | null>(null);
   const idRef = useRef(0);
   const conversationIdRef = useRef(getOrCreateConversationId());
+  const timingRef = useRef<TurnTiming | null>(null);
 
   // flushSync keeps each arriving chunk painted immediately, so the answer
   // types out instead of landing in batched jumps.
   const appendToAnswer = useCallback((text: string) => {
+    const timing = timingRef.current;
+    if (timing) {
+      timing.tokens += 1;
+      timing.firstTokenAt ??= performance.now();
+    }
     const update = (prev: Message[]) => appendToLastBotMessage(prev, text);
     flushSync(() => setMessages(update));
+  }, []);
+
+  const applySources = useCallback((text: string) => {
+    setMessages((prev) => attachSources(prev, text));
   }, []);
 
   // The server ends every response with a `done` frame, so this runs exactly
   // once per request. Nothing here infers the end of a stream from a pause.
   const endResponse = useCallback((errorMessage?: string) => {
+    const timing = timingRef.current;
+    timingRef.current = null;
+
     const fallbackId = errorMessage ? ++idRef.current : 0;
-    const update = (prev: Message[]) => finishLastBotMessage(prev, errorMessage, fallbackId);
-    setMessages(update);
+    setMessages((prev) => {
+      const closed = finishLastBotMessage(prev, errorMessage, fallbackId);
+      if (!timing) return closed;
+      return attachMetrics(closed, {
+        ttftMs:
+          timing.firstTokenAt === null
+            ? null
+            : Math.round(timing.firstTokenAt - timing.startedAt),
+        totalMs: Math.round(performance.now() - timing.startedAt),
+        tokens: timing.tokens,
+      });
+    });
     setIsStreaming(false);
   }, []);
 
@@ -92,6 +152,8 @@ export function useChat() {
     const ws = new ChatWebSocket((frame) => {
       switch (frame.type) {
         case 'sources':
+          applySources(frame.text);
+          break;
         case 'token':
           appendToAnswer(frame.text);
           break;
@@ -108,7 +170,7 @@ export function useChat() {
     return () => {
       ws.disconnect();
     };
-  }, [appendToAnswer, endResponse]);
+  }, [appendToAnswer, applySources, endResponse]);
 
   useEffect(() => {
     let active = true;
@@ -130,6 +192,10 @@ export function useChat() {
             sender: 'bot' as const,
             timestamp: new Date(exchange.created_at),
             isStreaming: false,
+            // Retrieval detail and timings are not persisted, so a restored
+            // turn shows the answer without them rather than inventing any.
+            retrieval: null,
+            metrics: null,
           },
         ]);
 
@@ -148,35 +214,42 @@ export function useChat() {
     };
   }, [endResponse]);
 
-  const sendMessage = useCallback((request: Omit<ChatRequest, 'conversation_id'>) => {
-    if (!request.text.trim() || isStreaming || isLoadingHistory) return;
+  const sendMessage = useCallback(
+    (request: Omit<ChatRequest, 'conversation_id'>) => {
+      if (!request.text.trim() || isStreaming || isLoadingHistory) return;
 
-    const userMsg: Message = {
-      id: ++idRef.current,
-      text: request.text,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-    const botPlaceholder: Message = {
-      id: ++idRef.current,
-      text: '',
-      sender: 'bot',
-      timestamp: new Date(),
-      isStreaming: true,
-    };
+      const userMsg: Message = {
+        id: ++idRef.current,
+        text: request.text,
+        sender: 'user',
+        timestamp: new Date(),
+      };
+      const botPlaceholder: Message = {
+        id: ++idRef.current,
+        text: '',
+        sender: 'bot',
+        timestamp: new Date(),
+        isStreaming: true,
+        retrieval: null,
+        metrics: null,
+      };
 
-    setMessages((prev) => [...prev, userMsg, botPlaceholder]);
-    setIsStreaming(true);
-    wsRef.current?.sendMessage({
-      ...request,
-      conversation_id: conversationIdRef.current,
-    });
-  }, [isLoadingHistory, isStreaming]);
+      setMessages((prev) => [...prev, userMsg, botPlaceholder]);
+      timingRef.current = { startedAt: performance.now(), firstTokenAt: null, tokens: 0 };
+      setIsStreaming(true);
+      wsRef.current?.sendMessage({
+        ...request,
+        conversation_id: conversationIdRef.current,
+      });
+    },
+    [isLoadingHistory, isStreaming],
+  );
 
   const clearMessages = useCallback(() => {
     const conversationId = createConversationId();
     localStorage.setItem(CONVERSATION_ID_KEY, conversationId);
     conversationIdRef.current = conversationId;
+    timingRef.current = null;
     setMessages([]);
     idRef.current = 0;
     wsRef.current?.reconnect();

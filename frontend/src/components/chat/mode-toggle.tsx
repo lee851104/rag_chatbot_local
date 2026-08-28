@@ -1,12 +1,10 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from '@/lib/utils'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { Database } from "lucide-react"
+} from '@/components/ui/tooltip'
 
 export interface ChatModes {
   rag: boolean
@@ -17,47 +15,60 @@ interface ModeToggleProps {
   onModesChange: (modes: ChatModes) => void
 }
 
-const modeConfig = [
+const MODES = [
   {
-    key: "rag" as const,
-    icon: Database,
-    label: "RAG Mode",
-    description: "Use uploaded documents for context",
+    key: 'rag' as const,
+    label: 'RAG',
+    description: '先從你上傳的文件檢索，再讓模型作答；答案會附上來源與分數',
   },
 ]
 
+/**
+ * Mode switches, as indicator lamps rather than buttons.
+ *
+ * Whether RAG is armed changes what the backend does with the question and what
+ * the answer is allowed to draw on, so the state has to survive a glance --
+ * hence a filled lamp plus a colour shift plus a border change, not colour alone.
+ */
 export function ModeToggle({ modes, onModesChange }: ModeToggleProps) {
-  const toggleMode = (key: keyof ChatModes) => {
+  const toggle = (key: keyof ChatModes) => {
     onModesChange({ ...modes, [key]: !modes[key] })
   }
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-1">
-        {modeConfig.map(({ key, icon: Icon, label, description }) => (
-          <Tooltip key={key}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleMode(key)}
-                className={cn(
-                  "h-8 px-2.5 gap-1.5 text-xs font-medium transition-all duration-200",
-                  modes[key]
-                    ? "bg-primary/15 text-primary border border-primary/30 hover:bg-primary/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{label}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-popover border-border">
-              <p className="font-medium">{label}</p>
-              <p className="text-xs text-muted-foreground">{description}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
+      <div className="flex items-center gap-1.5">
+        {MODES.map(({ key, label, description }) => {
+          const on = modes[key]
+          return (
+            <Tooltip key={key}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggle(key)}
+                  className={cn(
+                    'flex h-[22px] items-center gap-1.5 rounded-sm border px-2.5 text-[11.5px] transition-colors',
+                    on
+                      ? 'border-primary bg-primary/12 text-primary'
+                      : 'border-border-strong text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 shrink-0 rounded-full transition-colors',
+                      on ? 'bg-primary' : 'bg-faint',
+                    )}
+                  />
+                  {label}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="border-border-strong bg-popover">
+                <p className="text-xs">{description}</p>
+              </TooltipContent>
+            </Tooltip>
+          )
+        })}
       </div>
     </TooltipProvider>
   )

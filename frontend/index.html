@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="zh-Hant" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
@@ -7,8 +7,23 @@
     <link rel="icon" type="image/png" href="/icon-dark-32x32.png" media="(prefers-color-scheme: dark)" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1a1a2e" />
-    <title>Autara AI - Intelligent Conversations</title>
+    <!-- Matches --background in src/index.css. -->
+    <meta name="theme-color" content="#0e1116" />
+
+    <!--
+      Noto Sans TC covers Latin and Traditional Chinese in one family; IBM Plex
+      Mono handles every figure and identifier. Both have local fallbacks in the
+      --font-sans / --font-mono stacks, so an offline machine still renders
+      sensibly -- only the exact faces are lost.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+    />
+
+    <title>向量終端</title>
   </head>
   <body class="font-sans antialiased">
     <div id="root"></div>

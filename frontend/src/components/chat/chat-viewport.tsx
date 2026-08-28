@@ -1,7 +1,6 @@
-import { useEffect, useRef } from "react"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { ChatMessage, type Message } from "./chat-message"
-import { Bot, Sparkles } from "lucide-react"
+import { useEffect, useRef } from 'react'
+import { ChatMessage } from './chat-message'
+import type { Message } from '@/types/chat'
 
 interface ChatViewportProps {
   messages: Message[]
@@ -11,94 +10,63 @@ export function ChatViewport({ messages }: ChatViewportProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages])
 
   if (messages.length === 0) {
     return <EmptyState />
   }
 
+  // A plain scroll container rather than a styled scroll-area primitive: the
+  // stream re-renders on every token, and `scrollIntoView` needs to act on the
+  // real scrolling element to keep up.
   return (
-    <ScrollArea className="flex-1 px-4">
-      <div className="max-w-4xl mx-auto py-8 space-y-6">
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto w-full max-w-4xl space-y-6 px-5 py-6">
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
         <div ref={bottomRef} />
       </div>
-    </ScrollArea>
+    </div>
   )
 }
 
 function EmptyState() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4">
-      <div className="max-w-2xl w-full text-center space-y-8">
-        {/* Logo/Icon */}
-        <div className="relative mx-auto w-20 h-20">
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" />
-          <div className="relative flex items-center justify-center w-full h-full rounded-full bg-secondary border border-border">
-            <Bot className="h-10 w-10 text-primary" />
-          </div>
-        </div>
+    <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-5">
+      <div className="w-full max-w-lg py-8">
+        <p className="font-mono text-[10.5px] tracking-[0.16em] text-faint uppercase">Ready</p>
+        <h1 className="mt-2 text-xl font-semibold tracking-tight">問點什麼</h1>
+        <p className="mt-1.5 max-w-md text-[13px] leading-relaxed text-muted-foreground">
+          打開 RAG 之後，回答會先經過你上傳的 Markdown 文件；每則答案會標出用了哪些片段、相關度多少、花了多久。
+        </p>
 
-        {/* Welcome Text */}
-        <div className="space-y-3">
-          <h1 className="text-3xl font-semibold text-foreground tracking-tight text-balance">
-            Welcome to Autara AI
-          </h1>
-          <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto text-pretty">
-            Your intelligent assistant for conversations and document Q&A.
-          </p>
-        </div>
-
-        {/* Capabilities */}
-        <div className="grid grid-cols-1 gap-4 pt-4 max-w-sm mx-auto">
-          {capabilities.map((cap, i) => (
-            <div
-              key={i}
-              className="p-4 rounded-xl bg-secondary/50 border border-border/50 text-left"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">{cap.title}</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {cap.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Suggestions */}
-        <div className="pt-4">
-          <p className="text-xs text-muted-foreground mb-3">Try asking:</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {suggestions.map((suggestion, i) => (
-              <button
-                key={i}
-                className="px-4 py-2 text-sm text-foreground/80 bg-secondary/50 hover:bg-secondary border border-border/50 rounded-full transition-colors"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ul className="mt-6 overflow-hidden rounded-sm border border-border bg-card">
+          <li className="flex items-start gap-3 px-3.5 py-2.5">
+            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-up" />
+            <span className="min-w-0">
+              <span className="font-mono text-[11.5px] font-medium text-secondary-foreground">
+                文件問答
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                上傳 Markdown，檢索後兩階段排序（向量搜尋加上 cross-encoder 重排）再作答。
+              </span>
+            </span>
+          </li>
+          <li className="flex items-start gap-3 border-t border-border/70 px-3.5 py-2.5">
+            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-up" />
+            <span className="min-w-0">
+              <span className="font-mono text-[11.5px] font-medium text-secondary-foreground">
+                對話保留
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                對話存在後端，重新整理不會消失。按「新對話」開一段新的。
+              </span>
+            </span>
+          </li>
+        </ul>
       </div>
     </div>
   )
 }
-
-const capabilities = [
-  {
-    title: "Document Q&A",
-    description: "Upload Markdown files for Q&A.",
-  },
-]
-
-const suggestions = [
-  "Explain quantum computing",
-  "Review my code",
-  "Summarize a document",
-  "Help me brainstorm",
-]

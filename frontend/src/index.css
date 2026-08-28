@@ -3,93 +3,134 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Premium Dark Mode AI Chatbot Theme - Electric Blue Accent */
-:root {
-  --background: oklch(0.11 0.005 260);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.14 0.005 260);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.14 0.005 260);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.2 250);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.18 0.005 260);
-  --secondary-foreground: oklch(0.85 0 0);
-  --muted: oklch(0.22 0.005 260);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.65 0.2 250);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.25 0.01 260);
-  --input: oklch(0.18 0.005 260);
-  --ring: oklch(0.65 0.2 250);
-  --chart-1: oklch(0.65 0.2 250);
-  --chart-2: oklch(0.6 0.15 180);
-  --chart-3: oklch(0.55 0.12 280);
-  --chart-4: oklch(0.7 0.18 80);
-  --chart-5: oklch(0.65 0.2 320);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.12 0.005 260);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.2 250);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.18 0.005 260);
-  --sidebar-accent-foreground: oklch(0.85 0 0);
-  --sidebar-border: oklch(0.25 0.01 260);
-  --sidebar-ring: oklch(0.65 0.2 250);
+/* ═══════════════════════════════════════════════════════════════════════════
+   Terminal theme.
 
-  /* Custom tokens for chat UI */
-  --glass: oklch(0.16 0.005 260 / 0.8);
-  --glass-border: oklch(0.35 0.02 260 / 0.5);
-  --glow: oklch(0.65 0.2 250);
-  --message-user: oklch(0.2 0.01 260);
-  --message-ai: oklch(0.14 0.005 260);
+   A single dark palette, committed to deliberately: this reads as an instrument
+   panel, and a light variant would undercut that. Every colour is therefore
+   stated outright rather than inherited from a host.
+
+   The token NAMES are unchanged from the previous theme so existing utility
+   classes (`bg-background`, `text-muted-foreground`, `border-border`) keep
+   working -- only the values moved. Two things carry meaning and should not be
+   repurposed for decoration:
+
+     --primary   the one accent. Active states, focus, the send control.
+     --up/--down semantic only. Relevance passing or failing the threshold.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --background: #0e1116;
+  --foreground: #e6eaf0;
+  --card: #141922;
+  --card-foreground: #e6eaf0;
+  --popover: #141922;
+  --popover-foreground: #e6eaf0;
+
+  --primary: #ff8a1e;
+  --primary-foreground: #12140f;
+  --secondary: #1a2029;
+  --secondary-foreground: #c8d0da;
+  --muted: #1a2029;
+  --muted-foreground: #98a3b2;
+  --accent: #ff8a1e;
+  --accent-foreground: #12140f;
+  --destructive: #f0474f;
+  --destructive-foreground: #ffffff;
+
+  --border: #222a35;
+  --input: #1a2029;
+  --ring: #ff8a1e;
+
+  /* Square by default. Anything rounder reads as a consumer chat app. */
+  --radius: 0.125rem;
+
+  /* Semantic, not decorative. */
+  --up: #00c566;
+  --down: #f0474f;
+  --info: #3d8bff;
+
+  /* Third-level text: axis labels, timestamps, units. Dimmer than muted. */
+  --faint: #65707e;
+  /* Slightly stronger than --border, for the outline of raised surfaces. */
+  --border-strong: #2c3540;
+
+  --message-user: #141922;
+  --message-ai: #0e1116;
+
+  --chart-1: #ff8a1e;
+  --chart-2: #00c566;
+  --chart-3: #3d8bff;
+  --chart-4: #f0474f;
+  --chart-5: #98a3b2;
+
+  --sidebar: #141922;
+  --sidebar-foreground: #e6eaf0;
+  --sidebar-primary: #ff8a1e;
+  --sidebar-primary-foreground: #12140f;
+  --sidebar-accent: #1a2029;
+  --sidebar-accent-foreground: #c8d0da;
+  --sidebar-border: #222a35;
+  --sidebar-ring: #ff8a1e;
 }
 
+/* `index.html` hard-codes `class="dark"`, so this block is what actually
+   applies. Kept identical to `:root` on purpose -- there is one theme. */
 .dark {
-  --background: oklch(0.11 0.005 260);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.14 0.005 260);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.14 0.005 260);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.2 250);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.18 0.005 260);
-  --secondary-foreground: oklch(0.85 0 0);
-  --muted: oklch(0.22 0.005 260);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.65 0.2 250);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.25 0.01 260);
-  --input: oklch(0.18 0.005 260);
-  --ring: oklch(0.65 0.2 250);
-  --chart-1: oklch(0.65 0.2 250);
-  --chart-2: oklch(0.6 0.15 180);
-  --chart-3: oklch(0.55 0.12 280);
-  --chart-4: oklch(0.7 0.18 80);
-  --chart-5: oklch(0.65 0.2 320);
-  --sidebar: oklch(0.12 0.005 260);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.2 250);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.18 0.005 260);
-  --sidebar-accent-foreground: oklch(0.85 0 0);
-  --sidebar-border: oklch(0.25 0.01 260);
-  --sidebar-ring: oklch(0.65 0.2 250);
+  --background: #0e1116;
+  --foreground: #e6eaf0;
+  --card: #141922;
+  --card-foreground: #e6eaf0;
+  --popover: #141922;
+  --popover-foreground: #e6eaf0;
+
+  --primary: #ff8a1e;
+  --primary-foreground: #12140f;
+  --secondary: #1a2029;
+  --secondary-foreground: #c8d0da;
+  --muted: #1a2029;
+  --muted-foreground: #98a3b2;
+  --accent: #ff8a1e;
+  --accent-foreground: #12140f;
+  --destructive: #f0474f;
+  --destructive-foreground: #ffffff;
+
+  --border: #222a35;
+  --input: #1a2029;
+  --ring: #ff8a1e;
+
+  --up: #00c566;
+  --down: #f0474f;
+  --info: #3d8bff;
+  --faint: #65707e;
+  --border-strong: #2c3540;
+
+  --message-user: #141922;
+  --message-ai: #0e1116;
+
+  --chart-1: #ff8a1e;
+  --chart-2: #00c566;
+  --chart-3: #3d8bff;
+  --chart-4: #f0474f;
+  --chart-5: #98a3b2;
+
+  --sidebar: #141922;
+  --sidebar-foreground: #e6eaf0;
+  --sidebar-primary: #ff8a1e;
+  --sidebar-primary-foreground: #12140f;
+  --sidebar-accent: #1a2029;
+  --sidebar-accent-foreground: #c8d0da;
+  --sidebar-border: #222a35;
+  --sidebar-ring: #ff8a1e;
 }
 
 @theme inline {
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'Geist Mono Variable', monospace;
-  --color-glass: var(--glass);
-  --color-glass-border: var(--glass-border);
-  --color-glow: var(--glow);
-  --color-message-user: var(--message-user);
-  --color-message-ai: var(--message-ai);
+  /* Noto Sans TC carries both Latin and Traditional Chinese in one family, so
+     mixed-script lines keep a single set of proportions. IBM Plex Mono handles
+     every figure, identifier and unit. */
+  --font-sans: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -109,15 +150,26 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-info: var(--info);
+  --color-faint: var(--faint);
+  --color-border-strong: var(--border-strong);
+  --color-message-user: var(--message-user);
+  --color-message-ai: var(--message-ai);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+
+  --radius-sm: 0.125rem;
+  --radius-md: 0.125rem;
+  --radius-lg: 0.1875rem;
+  --radius-xl: 0.1875rem;
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -135,74 +187,75 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Figures line up in columns everywhere: scores, timings, sizes, counts. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
-/* Custom animations */
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 20px oklch(0.65 0.2 250 / 0.4), 0 0 40px oklch(0.65 0.2 250 / 0.2);
-  }
+/* ── Streaming caret ─────────────────────────────────────────────────────── */
+@keyframes caret-blink {
+  0%,
   50% {
-    box-shadow: 0 0 30px oklch(0.65 0.2 250 / 0.6), 0 0 60px oklch(0.65 0.2 250 / 0.3);
+    opacity: 1;
   }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+.animate-caret {
+  animation: caret-blink 1.1s steps(2) infinite;
 }
 
 @keyframes typing-dot {
-  0%, 60%, 100% {
-    opacity: 0.3;
-    transform: translateY(0);
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
   }
   30% {
     opacity: 1;
-    transform: translateY(-4px);
   }
+}
+.animate-typing-dot {
+  animation: typing-dot 1.4s ease-in-out infinite;
 }
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-.animate-typing-dot {
-  animation: typing-dot 1.4s ease-in-out infinite;
-}
-
 .animate-fade-in-up {
-  animation: fade-in-up 0.3s ease-out forwards;
+  animation: fade-in-up 0.18s ease-out forwards;
 }
 
-/* Glassmorphism utility */
-.glass {
-  background: oklch(0.16 0.005 260 / 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid oklch(0.35 0.02 260 / 0.5);
+@media (prefers-reduced-motion: reduce) {
+  .animate-caret,
+  .animate-typing-dot,
+  .animate-fade-in-up {
+    animation: none;
+  }
 }
 
-/* Custom scrollbar */
+/* ── Scrollbar: present but quiet ────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.3 0.01 260);
-  border-radius: 3px;
+  background: #2c3540;
+  border-radius: 1px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.4 0.01 260);
+  background: #3a4553;
 }
