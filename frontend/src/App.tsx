@@ -66,13 +66,13 @@ function App() {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-dvh bg-background">
       <ChatHeader onNewChat={handleNewChat} disabled={isStreaming} />
 
       <main className="flex-1 flex flex-col min-h-0">
         <ChatViewport messages={messages} />
 
-        <div className="shrink-0 border-t border-border/30 bg-background/50 backdrop-blur-sm">
+        <div className="shrink-0 border-t border-border bg-background">
           <ChatInput
             onSend={handleSend}
             isLoading={isStreaming}

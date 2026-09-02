@@ -26,7 +26,10 @@ const modeConfig = [
   },
 ]
 
-export function ModeToggle({ modes, onModesChange }: ModeToggleProps) {
+export function ModeToggle({
+  modes,
+  onModesChange,
+}: Readonly<ModeToggleProps>) {
   const toggleMode = (key: keyof ChatModes) => {
     onModesChange({ ...modes, [key]: !modes[key] })
   }
@@ -38,21 +41,24 @@ export function ModeToggle({ modes, onModesChange }: ModeToggleProps) {
           <Tooltip key={key}>
             <TooltipTrigger asChild>
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => toggleMode(key)}
+                aria-label={label}
+                aria-pressed={modes[key]}
                 className={cn(
-                  "h-8 px-2.5 gap-1.5 text-xs font-medium transition-all duration-200",
+                  "h-8 rounded-sm px-2.5 gap-1.5 text-xs font-medium transition-colors duration-300",
                   modes[key]
-                    ? "bg-primary/15 text-primary border border-primary/30 hover:bg-primary/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{label}</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="bg-popover border-border">
+            <TooltipContent side="top" className="rounded-sm bg-popover border-border">
               <p className="font-medium">{label}</p>
               <p className="text-xs text-muted-foreground">{description}</p>
             </TooltipContent>

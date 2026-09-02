@@ -1,58 +1,45 @@
+import { Plus } from "lucide-react"
+
+import robotLogo from "@/assets/robot-logo.png"
 import { Button } from "@/components/ui/button"
-import { Bot, Plus, History, Settings } from "lucide-react"
 
 interface ChatHeaderProps {
   onNewChat: () => void
   disabled?: boolean
 }
 
-export function ChatHeader({ onNewChat, disabled }: ChatHeaderProps) {
+export function ChatHeader({ onNewChat, disabled }: Readonly<ChatHeaderProps>) {
   return (
-    <header className="shrink-0 h-16 border-b border-border/50 bg-background/80 backdrop-blur-sm">
-      <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/30 rounded-lg blur-md" />
-            <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-secondary border border-border">
-              <Bot className="h-5 w-5 text-primary" />
-            </div>
+    <header className="shrink-0 h-16 border-b border-border bg-background/95 backdrop-blur-md">
+      <div className="h-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 shrink-0 rounded-sm bg-secondary overflow-hidden">
+            <img
+              src={robotLogo}
+              alt=""
+              className="w-full h-full object-contain p-1"
+            />
           </div>
-          <div>
-            <h1 className="font-semibold text-foreground tracking-tight">Autara AI</h1>
-            <p className="text-xs text-muted-foreground">Powered by llamacpp and Chroma</p>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground leading-tight">
+              Autara AI
+            </p>
+            <p className="text-xs text-muted-foreground leading-tight mt-1 truncate">
+              Document intelligence
+            </p>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <History className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">History</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onNewChat}
-            disabled={disabled}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">New Chat</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Settings className="h-4 w-4" />
-            <span className="sr-only">Settings</span>
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onNewChat}
+          disabled={disabled}
+          className="h-9 rounded-sm px-3 text-foreground hover:bg-secondary"
+        >
+          <Plus className="h-4 w-4" />
+          <span>New chat</span>
+        </Button>
       </div>
     </header>
   )

@@ -1,13 +1,15 @@
 import { useEffect, useRef } from "react"
+
+import robotLogo from "@/assets/robot-logo.png"
 import { ScrollArea } from "@/components/ui/scroll-area"
+
 import { ChatMessage, type Message } from "./chat-message"
-import { Bot, Sparkles } from "lucide-react"
 
 interface ChatViewportProps {
   messages: Message[]
 }
 
-export function ChatViewport({ messages }: ChatViewportProps) {
+export function ChatViewport({ messages }: Readonly<ChatViewportProps>) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,8 +21,8 @@ export function ChatViewport({ messages }: ChatViewportProps) {
   }
 
   return (
-    <ScrollArea className="flex-1 px-4">
-      <div className="max-w-4xl mx-auto py-8 space-y-6">
+    <ScrollArea className="flex-1 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto py-10 sm:py-14 space-y-8">
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
@@ -32,73 +34,27 @@ export function ChatViewport({ messages }: ChatViewportProps) {
 
 function EmptyState() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4">
-      <div className="max-w-2xl w-full text-center space-y-8">
-        {/* Logo/Icon */}
-        <div className="relative mx-auto w-20 h-20">
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" />
-          <div className="relative flex items-center justify-center w-full h-full rounded-full bg-secondary border border-border">
-            <Bot className="h-10 w-10 text-primary" />
-          </div>
+    <div className="flex-1 min-h-0 overflow-y-auto flex items-center justify-center px-6 py-6 sm:py-12">
+      <div className="max-w-xl w-full text-center">
+        <div className="w-16 h-16 mx-auto rounded-sm bg-secondary overflow-hidden">
+          <img
+            src={robotLogo}
+            alt=""
+            className="w-full h-full object-contain p-2"
+          />
         </div>
 
-        {/* Welcome Text */}
-        <div className="space-y-3">
-          <h1 className="text-3xl font-semibold text-foreground tracking-tight text-balance">
-            Welcome to Autara AI
-          </h1>
-          <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto text-pretty">
-            Your intelligent assistant for conversations and document Q&A.
-          </p>
-        </div>
-
-        {/* Capabilities */}
-        <div className="grid grid-cols-1 gap-4 pt-4 max-w-sm mx-auto">
-          {capabilities.map((cap, i) => (
-            <div
-              key={i}
-              className="p-4 rounded-xl bg-secondary/50 border border-border/50 text-left"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">{cap.title}</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {cap.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Suggestions */}
-        <div className="pt-4">
-          <p className="text-xs text-muted-foreground mb-3">Try asking:</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {suggestions.map((suggestion, i) => (
-              <button
-                key={i}
-                className="px-4 py-2 text-sm text-foreground/80 bg-secondary/50 hover:bg-secondary border border-border/50 rounded-full transition-colors"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="mt-8 text-xs font-medium text-muted-foreground">
+          RAG workspace
+        </p>
+        <h1 className="mt-3 text-3xl sm:text-[40px] leading-tight font-medium text-foreground">
+          Ask with context.
+        </h1>
+        <p className="mt-4 max-w-md mx-auto text-sm leading-6 text-muted-foreground">
+          Upload a document, enable RAG mode, and get focused answers grounded
+          in your own material.
+        </p>
       </div>
     </div>
   )
 }
-
-const capabilities = [
-  {
-    title: "Document Q&A",
-    description: "Upload Markdown files for Q&A.",
-  },
-]
-
-const suggestions = [
-  "Explain quantum computing",
-  "Review my code",
-  "Summarize a document",
-  "Help me brainstorm",
-]
