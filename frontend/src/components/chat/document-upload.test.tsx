@@ -54,6 +54,15 @@ describe("DocumentUpload", () => {
     expect(markup).toContain("hidden")
   })
 
+  it("shows uploaded filenames and the expanded state when opened", () => {
+    const markup = renderDocumentUpload(true)
+
+    expect(markup).toContain('aria-expanded="true"')
+    expect(markup).toContain('id="uploaded-documents"')
+    expect(markup).toContain("company-handbook.md")
+    expect(markup).not.toMatch(/id="uploaded-documents"[^>]*hidden/)
+  })
+
   it("links the empty document trigger to its collapsed region", () => {
     const markup = renderDocumentUpload(false, [])
 

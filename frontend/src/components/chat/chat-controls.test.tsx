@@ -22,6 +22,16 @@ describe("chat controls", () => {
     )
 
     expect(markup).toContain('aria-label="RAG Mode"')
+    expect(markup).toContain('aria-pressed="false"')
+  })
+
+  it("exposes the active RAG state", () => {
+    const markup = renderToStaticMarkup(
+      <ModeToggle modes={{ rag: true }} onModesChange={vi.fn()} />,
+    )
+
+    expect(markup).toContain('aria-label="RAG Mode"')
+    expect(markup).toContain('aria-pressed="true"')
   })
 
   it("links the attachment control to the document disclosure region", () => {
